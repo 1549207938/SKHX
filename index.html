@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 语音伴侣 - 深空回响</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- 动态背景层 -->
+    <div class="background-layer">
+        <div class="stars"></div>
+        <div class="nebula"></div>
+        <div class="floating-particles"></div>
+    </div>
+
+    <!-- 屏幕特效层 (CRT/扫描线) -->
+    <div class="screen-overlay">
+        <div class="scanlines"></div>
+        <div class="vignette"></div>
+    </div>
+
+    <!-- 3D角色展示层 (在所有视图中都可见，但在某些视图可能模糊或缩小) -->
+    <div class="character-layer" id="character-container">
+        <!-- 
+            使用图片作为角色立绘 
+            [本地图片优先]: 请将您的图片命名为 character.png (或 jpg/jpeg) 并放入 images 文件夹
+            [网络图片备选]: 如果找不到本地图片，将显示默认的银发帅哥
+        -->
+        <div class="hologram-effect">
+            <img src="images/character.png?v=1" 
+                 onerror="this.onerror=null; this.src='https://placehold.co/400x800/1a1a2e/FFF?text=Character+Signal+Lost';"
+                 alt="Character" 
+                 class="character-img"
+                 crossorigin="anonymous">
+            
+            <!-- 全息扫描线覆盖层 -->
+            <div class="scan-overlay"></div>
+            <div class="pulse-ring"></div>
+        </div>
+    </div>
+
+    <!-- UI 交互层 -->
+    <div class="ui-layer">
+        
+        <!-- 顶部状态栏 (通用) -->
+        <div class="top-hud" style="display: none;">
+            <div class="status-group">
+                <div class="status-pill">
+                    <div class="indicator active"></div>
+                    <span class="status-text">ONLINE</span>
+                </div>
+            </div>
+            
+            <!-- 状态数值组 -->
+            <div class="stats-container hud-card">
+                <!-- 亲密度模块 -->
+                <div class="stat-main">
+                    <div class="stat-main-top">
+                        <div class="icon-box heart-pulse">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-header">
+                                <span class="stat-label">SYNC</span>
+                                <span class="level-value" id="intimacy-level">Lv.2</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tech-progress-bar">
+                        <div class="tech-progress-fill" id="intimacy-bar" style="width: 25%"></div>
+                    </div>
+                </div>
+
+                <!-- 状态模块 -->
+                <div class="stat-sub-grid">
+                    <div class="stat-chip mood" title="心情">
+                        <i class="fas fa-face-smile"></i>
+                        <span>愉悦</span>
+                    </div>
+                    <div class="stat-chip energy" title="活力">
+                        <i class="fas fa-bolt"></i>
+                        <span>充沛</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 视图内容区域 -->
+        <div class="views-container">
+            
+            <!-- 0. 登录视图 -->
+            <div id="view-login" class="view-section active">
+                <div class="login-container">
+                    <div class="logo-area">
+                        <h1>深空回响</h1>
+                        <p class="subtitle">DEEPSPACE ECHO</p>
+                    </div>
+                    
+                    <div class="login-form">
+                        <div class="input-group">
+                            <label>猎人ID / HUNTER ID</label>
+                            <input type="text" id="hunter-id" placeholder="Enter ID..." value="Evol_Hunter_01">
+                        </div>
+                        <div class="input-group">
+                            <label>接入码 / ACCESS CODE</label>
+                            <input type="password" id="access-code" placeholder="••••••••" value="123456">
+                        </div>
+                        <button class="login-btn" onclick="handleLogin()">
+                            <span class="btn-text">神经连接 LINK START</span>
+                            <div class="btn-glitch"></div>
+                        </button>
+                    </div>
+
+                    <div class="login-footer">
+                        <p>系统状态: <span class="status-ok">NORMAL</span></p>
+                        <p>服务器: Deepspace_CN_01</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 1. 主页视图 -->
+            <div id="view-home" class="view-section">
+                <!-- 侧边悬浮操作栏 -->
+                <div class="side-action-bar">
+                    <button class="side-btn" onclick="handleInteraction('touch')" title="触碰">
+                        <span class="side-icon"><i class="fas fa-hand-sparkles"></i></span>
+                    </button>
+                    <button class="side-btn" onclick="handleInteraction('gift')" title="送礼">
+                        <span class="side-icon"><i class="fas fa-gift"></i></span>
+                    </button>
+                    <button class="side-btn" onclick="handleInteraction('scene')" title="切换场景">
+                        <span class="side-icon"><i class="fas fa-image"></i></span>
+                    </button>
+                    <button class="side-btn" onclick="switchTab('archive')" title="档案">
+                        <span class="side-icon"><i class="fas fa-sliders"></i></span>
+                    </button>
+                </div>
+
+                <!-- 底部语音球 (主页入口) -->
+                <div class="home-voice-trigger" onclick="switchTab('chat')">
+                    <div class="voice-orb">
+                        <i class="fas fa-microphone"></i>
+                    </div>
+                    <div class="orb-pulse"></div>
+                    <div class="orb-ring"></div>
+                </div>
+                
+                <!-- 底部字幕区 -->
+                <div class="cinematic-subtitle">
+                    <p id="home-subtitle">“我一直在等你回来。任务数据已准备就绪。”</p>
+                </div>
+            </div>
+
+            <!-- 2. 聊天视图 -->
+            <div id="view-chat" class="view-section">
+                <div class="chat-interface">
+                    <div class="chat-history" id="chat-history">
+                        <!-- 消息记录 -->
+                        <div class="msg system">系统: 连接已建立...</div>
+                    </div>
+                    
+                    <div class="quick-replies">
+                        <button class="chip-btn" onclick="sendQuickMessage('我可以问你一个问题吗？')">提问</button>
+                        <button class="chip-btn" onclick="sendQuickMessage('我们来玩角色扮演吧')">角色扮演</button>
+                        <button class="chip-btn" onclick="sendQuickMessage('给我讲个笑话')">讲个笑话</button>
+                    </div>
+
+                    <div class="voice-control-area">
+                        <!-- 整合后的输入栏 -->
+                        <div class="text-input-wrapper">
+                            <button class="voice-btn-mini" id="voice-btn" title="语音输入">
+                                <i class="fas fa-microphone"></i>
+                                <div class="voice-wave-mini" id="voice-wave"></div>
+                            </button>
+                            <input type="text" id="chat-input" placeholder="输入指令..." autocomplete="off">
+                            <button class="send-btn" onclick="handleTextInput()">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 探索视图 -->
+            <div id="view-explore" class="view-section">
+                <div class="explore-header">
+                    <h2>冒险地图</h2>
+                    <div class="stamina-pill">
+                        <span>⚡ 体力: 100/100</span>
+                    </div>
+                </div>
+                <div class="location-cards">
+                    <div class="location-card" onclick="startAdventure('midnight_walk')">
+                        <div class="card-icon-wrapper">
+                            <i class="fas fa-moon"></i>
+                        </div>
+                        <div class="card-info">
+                            <h3>午夜漫步</h3>
+                            <p>消耗: 10 体力</p>
+                        </div>
+                        <div class="card-arrow"><i class="fas fa-chevron-right"></i></div>
+                    </div>
+                    <div class="location-card" onclick="startAdventure('cafe_chat')">
+                        <div class="card-icon-wrapper">
+                            <i class="fas fa-mug-hot"></i>
+                        </div>
+                        <div class="card-info">
+                            <h3>咖啡馆闲聊</h3>
+                            <p>消耗: 5 体力</p>
+                        </div>
+                        <div class="card-arrow"><i class="fas fa-chevron-right"></i></div>
+                    </div>
+                    <div class="location-card locked">
+                        <div class="card-icon-wrapper">
+                            <i class="fas fa-dungeon"></i>
+                        </div>
+                        <div class="card-info">
+                            <h3>深空遗迹</h3>
+                            <p>Lv.10 解锁</p>
+                        </div>
+                        <div class="card-arrow"><i class="fas fa-lock"></i></div>
+                    </div>
+                </div>
+                
+                <div class="task-list">
+                    <h3>每日任务</h3>
+                    <div class="task-item">
+                        <span>完成一次对话</span>
+                        <button class="claim-btn">领取</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 档案视图 -->
+            <div id="view-archive" class="view-section">
+                <div class="archive-panel">
+                    <h2>角色档案</h2>
+                    <div class="archive-stats">
+                        <div class="stat-row">
+                            <span>姓名</span>
+                            <span>赛斯 (Seth)</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>身份</span>
+                            <span>深空猎人</span>
+                        </div>
+                    </div>
+
+                    <div class="customization-section">
+                        <h3>个性化定制</h3>
+                        
+                        <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+                            <span>切换搭档</span>
+                            <div class="character-selector">
+                                <div class="char-avatar active" onclick="switchCharacter('seth')" title="沈星回">
+                                    <img src="images/character.png?v=1" alt="Seth">
+                                </div>
+                                <div class="char-avatar" onclick="switchCharacter('zayne')" title="黎深">
+                                    <img src="images/2.png?v=1" alt="Zayne">
+                                </div>
+                                <div class="char-avatar" onclick="switchCharacter('rafayel')" title="祁煜">
+                                    <img src="images/OIP.png?v=1" alt="Rafayel">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <span>衣橱</span>
+                            <button class="setting-btn btn-wardrobe">
+                                <i class="fas fa-tshirt"></i> 打开衣橱
+                            </button>
+                        </div>
+
+                        <div class="setting-item">
+                            <span>性格调校</span>
+                            <div class="toggle-switch">
+                                <span class="active">高冷</span>
+                                <span>温和</span>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <span>音调调节</span>
+                            <input type="range" min="0.5" max="1.5" step="0.1" value="0.8" class="slider">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 底部导航栏 -->
+        <div class="bottom-nav" style="display: none;">
+            <div class="nav-item active" onclick="switchTab('home')">
+                <span class="nav-icon"><i class="fas fa-house"></i></span>
+                <span class="nav-text">主页</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('chat')">
+                <span class="nav-icon"><i class="fas fa-comment-dots"></i></span>
+                <span class="nav-text">聊天</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('explore')">
+                <span class="nav-icon"><i class="fas fa-compass"></i></span>
+                <span class="nav-text">探索</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('archive')">
+                <span class="nav-icon"><i class="fas fa-user-astronaut"></i></span>
+                <span class="nav-text">档案</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
